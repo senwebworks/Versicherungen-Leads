@@ -1,33 +1,44 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve, relative } from 'path';
+import fs from 'fs';
+
+function getHtmlFiles(dir, files_ = []) {
+  const files = fs.readdirSync(dir);
+  for (const i in files) {
+    const name = resolve(dir, files[i]);
+    if (fs.statSync(name).isDirectory()) {
+      if (files[i] !== 'node_modules' && files[i] !== 'dist' && files[i] !== 'public' && !files[i].startsWith('.')) {
+        getHtmlFiles(name, files_);
+      }
+    } else if (name.endsWith('.html')) {
+      files_.push(name);
+    }
+  }
+  return files_;
+}
+
+const htmlFiles = getHtmlFiles(__dirname);
+const input = {};
+
+htmlFiles.forEach((file) => {
+  const relPath = relative(__dirname, file);
+  // Create a reasonable key name for the entry point
+  let key = relPath.replace(/\.html$/, '').replace(/\\/g, '/');
+  
+  if (key === 'index') {
+    key = 'main';
+  } else if (key.endsWith('/index')) {
+    key = key.slice(0, -6);
+  }
+  
+  input[key] = file;
+});
 
 export default defineConfig({
   build: {
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        versicherungen: resolve(__dirname, 'versicherungen/index.html'),
-        pkv: resolve(__dirname, 'versicherungen/pkv/index.html'),
-        bu: resolve(__dirname, 'versicherungen/bu/index.html'),
-        altersvorsorge: resolve(__dirname, 'versicherungen/altersvorsorge/index.html'),
-        haftpflicht: resolve(__dirname, 'versicherungen/haftpflicht/index.html'),
-        hausrat: resolve(__dirname, 'versicherungen/hausrat/index.html'),
-        kfz: resolve(__dirname, 'versicherungen/kfz/index.html'),
-        vorsorge: resolve(__dirname, 'vorsorge/index.html'),
-        rechner: resolve(__dirname, 'rechner/index.html'),
-        anfrage: resolve(__dirname, 'anfrage/index.html'),
-        blog: resolve(__dirname, 'blog/index.html'),
-        'blog-welche-versicherung': resolve(__dirname, 'blog/welche-versicherung/index.html'),
-        'blog-pkv-vs-gkv': resolve(__dirname, 'blog/pkv-vs-gkv/index.html'),
-        'blog-fehler-versicherungen': resolve(__dirname, 'blog/fehler-versicherungen/index.html'),
-        'blog-vorsorge-sinnvoll': resolve(__dirname, 'blog/vorsorge-sinnvoll/index.html'),
-        faq: resolve(__dirname, 'faq/index.html'),
-        'ueber-uns': resolve(__dirname, 'ueber-uns/index.html'),
-        kontakt: resolve(__dirname, 'kontakt/index.html'),
-        impressum: resolve(__dirname, 'rechtliches/impressum.html'),
-        datenschutz: resolve(__dirname, 'rechtliches/datenschutz.html'),
-        agb: resolve(__dirname, 'rechtliches/agb.html'),
-      },
+      input: input,
     },
   },
 });
+
