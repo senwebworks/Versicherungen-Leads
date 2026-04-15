@@ -234,9 +234,17 @@ const insuranceConfigs = {
     }
 };
 
-const pkvContent = fs.readFileSync(path.join(__dirname, 'versicherungen', 'pkv', 'index.html'), 'utf8');
-const headerTemplate = pkvContent.split(/<header.*?>/)[0] + pkvContent.match(/<header.*?>/)[0] + pkvContent.split(/<header.*?>/)[1].split('</header>')[0] + '</header>';
-const footerTemplate = pkvContent.split(/<footer.*?>/)[1].split('</footer>')[0];
+const rootContent = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+const headContent = rootContent.split('<head>')[1].split('</head>')[0];
+const trustBarTemplate = rootContent.includes('class="trust-top-bar"') ? 
+    '<div class="trust-top-bar">' + rootContent.split('<div class="trust-top-bar">')[1].split('</div>')[0] + '</div>' : '';
+
+// Robust extraction for header and footer
+const headerMatch = rootContent.match(/<header[^>]*>([\s\S]*?)<\/header>/i);
+const headerTemplate = headerMatch ? headerMatch[0] : '<header></header>';
+
+const footerMatch = rootContent.match(/<footer[^>]*>([\s\S]*?)<\/footer>/i);
+const footerTemplate = footerMatch ? footerMatch[0] : '<footer></footer>';
 
 function generateAnfrageHTML(type, config) {
     const fieldsHTML = config.fields.map(f => {
@@ -263,19 +271,21 @@ function generateAnfrageHTML(type, config) {
     return `<!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anfrage: ${config.title} - SICHER VERSICHERUNG</title>
-    <link rel="stylesheet" href="/style.css">
+    ${headContent}
+    <title>Anfrage: ${config.title} - JETZT TARIF SPAREN</title>
 </head>
-<body style="background: var(--background);">
+<body id="top">
+    ${trustBarTemplate}
     ${headerTemplate}
 
-    <main class="section-padding">
+    <main class="section-padding" style="padding-top: 150px;">
         <div class="container">
-            <div class="hero-split" style="grid-template-columns: 1fr 1.2fr; align-items: flex-start; gap: var(--space-2xl);">
+            <div class="hero-split">
                 <!-- Left -->
                 <div class="animate-fade-in" style="position: sticky; top: 120px;">
+                    <div class="milestone-claim" style="margin-bottom: 2rem; font-size: 0.85rem;">
+                        <span>🎉</span> Über 100.000 Kunden gespart!
+                    </div>
                     <span class="badge-direct" style="background: var(--success); color: white; padding: 0.5rem 1rem; font-size: 0.9rem; margin-bottom: 1rem; display: inline-block;">✓ Direkt & Unverbindlich</span>
                     <h1 style="font-size: 2.5rem; margin-bottom: 1.5rem; line-height: 1.2;">Analyse für Ihre<br><span style="color: var(--accent);">${config.title}</span></h1>
                     
@@ -344,7 +354,8 @@ function generateAnfrageHTML(type, config) {
         </div>
     </main>
 
-    <footer>${footerTemplate}</footer>
+    ${footerTemplate}
+    <script type="module" src="/main.js"></script>
 </body>
 </html>`;
 }
