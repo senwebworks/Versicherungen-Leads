@@ -1,6 +1,26 @@
 // Global JS for the insurance portal
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Global Conversion Tracking
+    window.trackLeadConversion = function() {
+        if (typeof gtag === 'function') {
+            gtag('event', 'conversion', {
+                'send_to': 'AW-18082578300/UcwYCOCvupwcEPz-uK5D',
+                'value': 1.0,
+                'currency': 'EUR'
+            });
+            console.log('Conversion tracked successfully');
+        } else {
+            console.warn('gtag not found, conversion not tracked');
+        }
+    };
+
+    // Global Form Submission Listener
+    document.addEventListener('submit', (e) => {
+        if (e.target.tagName === 'FORM') {
+            window.trackLeadConversion();
+        }
+    });
     // Mobile Navigation logic (if needed in the future)
     // Animation for elements on scroll
     
